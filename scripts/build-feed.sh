@@ -21,5 +21,6 @@ mkdir -p "$FEED_DIR"
 
 "$APK_TOOL" mkndx --allow-untrusted \
   --sign-key "$SIGN_KEY" \
+  --pkgname-spec '${name}_${version}_openwrt_${arch}.apk' \
   --output "$FEED_DIR/packages.adb" \
   "$FEED_DIR"/*.apk
