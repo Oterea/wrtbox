@@ -37,7 +37,7 @@ apk add curl ca-bundle
 wget -O /etc/apk/keys/wrtbox.pem https://wrtbox.czuouo.workers.dev/public-key.pem
 ARCH="$(cat /etc/apk/arch)"
 echo "https://wrtbox.czuouo.workers.dev/openwrt-25.12/${ARCH}/packages.adb" \
-  > /etc/apk/repositories.d/wrtbox.list
+  >> /etc/apk/repositories.d/customfeeds.list
 apk update
 apk add sing-box
 ```
