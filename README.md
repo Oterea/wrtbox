@@ -12,6 +12,26 @@ The router downloads the small signed index and public key from the wrtbox Worke
 
 ## Router setup
 
+### One-command setup
+
+The feed installer detects the OpenWrt release and architecture, installs the
+signing key, writes the APK repository, and refreshes the package index:
+
+```sh
+wget -O - https://wrtbox.czuouo.workers.dev/feed.sh | ash
+```
+
+Then install from SSH:
+
+```sh
+apk add --force-overwrite sing-box
+```
+
+Or open LuCI **System → Software**, click **Update lists**, search for
+`sing-box`, and install it there.
+
+### Manual setup
+
 ```sh
 apk add curl ca-bundle
 wget -O /etc/apk/keys/wrtbox.pem https://wrtbox.czuouo.workers.dev/public-key.pem
@@ -21,6 +41,10 @@ echo "https://wrtbox.czuouo.workers.dev/openwrt-25.12/${ARCH}/packages.adb" \
 apk update
 apk add sing-box
 ```
+
+The installer currently supports OpenWrt 25.12, including ImmortalWrt 25.12.
+When a new OpenWrt series is published, the feed workflow and installer can
+be extended to add that series without changing the existing 25.12 URL.
 
 The feed currently targets `gh-proxy.org` for the APK asset because Cloudflare static assets have a 25 MiB per-file limit while the official sing-box APK is larger. The feed index and signing key remain hosted by the wrtbox Worker.
 

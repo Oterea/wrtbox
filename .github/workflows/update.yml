@@ -48,6 +48,9 @@ jobs:
             sh ./scripts/build-feed.sh
           rm -f "$RUNNER_TEMP/wrtbox-private-key.pem"
 
+      - name: Publish feed installer
+        run: cp scripts/feed.sh dist/feed.sh
+
       - name: Set up Node.js 24
         uses: actions/setup-node@v5
         with:
