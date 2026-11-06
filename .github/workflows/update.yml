@@ -1,0 +1,40 @@
+name: update-feed
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+env:
+  OPENWRT_SERIES: "25.12"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - aarch64_generic
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Download official APK asset
+        env:
+          ARCH: ${{ matrix.arch }}
+          OUT_DIR: dist/openwrt-25.12/${{ matrix.arch }}
+        run: sh ./scripts/update-release.sh
+
+      - name: Upload unsigned feed material
+        uses: actions/upload-artifact@v4
+        with:
+          name: feed-${{ matrix.arch }}
+          path: dist
+
+  # Signing and Cloudflare deployment will be enabled after the repository
+  # secrets are created. Keep the private signing key out of git.
