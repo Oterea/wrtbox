@@ -9,18 +9,17 @@ set -eu
 : "${SIGN_KEY:?SIGN_KEY is required}"
 : "${ARCH:=aarch64_generic}"
 : "${FEED_DIR:=dist/openwrt-25.12/${ARCH}}"
+: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/SagerNet/sing-box/releases/download/v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
 
 mkdir -p "$FEED_DIR"
 
-# The package must have the normal name-version.apk layout because apk
-# resolves package files relative to the packages.adb index.
-"$APK_TOOL" --allow-untrusted adbsign \
-  --reset-signatures \
-  --sign-key "$SIGN_KEY" \
-  "$FEED_DIR"/*.apk
-
 "$APK_TOOL" mkndx --allow-untrusted \
   --sign-key "$SIGN_KEY" \
-  --pkgname-spec '${name}_${version}_openwrt_${arch}.apk' \
+  --pkgname-spec "$PKGNAME_SPEC" \
   --output "$FEED_DIR/packages.adb" \
   "$FEED_DIR"/*.apk
+
+# Cloudflare's static asset limit is smaller than the official sing-box APK.
+# The index points at the proxied upstream Release asset, so do not publish
+# the local APK through the Worker.
+rm -f "$FEED_DIR"/*.apk
