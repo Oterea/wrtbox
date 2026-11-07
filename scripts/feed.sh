@@ -36,7 +36,7 @@ if [ -z "$ARCH" ]; then
     exit 1
 fi
 
-REPOSITORY_URL="https://wrtbox.czuouo.workers.dev"
+REPOSITORY_URL="https://wrtbox.pages.dev"
 FEED_URL="$REPOSITORY_URL/openwrt-$SERIES/$CHANNEL/$ARCH/packages.adb"
 KEY_FILE="/etc/apk/keys/wrtbox.pem"
 REPOSITORY_FILE="/etc/apk/repositories.d/customfeeds.list"
@@ -60,7 +60,10 @@ mv "$KEY_TMP" "$KEY_FILE"
 
 # Keep other custom feeds (including momo) and replace only the wrtbox entry.
 touch "$REPOSITORY_FILE"
-sed -i '\|^https://wrtbox\.czuouo\.workers\.dev/|d' "$REPOSITORY_FILE"
+sed -i \
+    -e '\|^https://wrtbox\.pages\.dev/|d' \
+    -e '\|^https://wrtbox\.czuouo\.workers\.dev/|d' \
+    "$REPOSITORY_FILE"
 echo "$FEED_URL" >> "$REPOSITORY_FILE"
 
 echo "Updating APK repositories"
