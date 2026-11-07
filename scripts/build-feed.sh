@@ -11,7 +11,9 @@ set -eu
 : "${OPENWRT_SERIES:=25.12}"
 : "${CHANNEL:=stable}"
 : "${FEED_DIR:=dist/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}}"
-: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
+if [ -z "${PKGNAME_SPEC:-}" ]; then
+  PKGNAME_SPEC='https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v${version}/sing-box_${version}_openwrt_${arch}.apk'
+fi
 
 mkdir -p "$FEED_DIR"
 
