@@ -29,6 +29,7 @@ mkdir -p "$OUT_DIR"
 
 if [ -n "$GH_TOKEN" ]; then
   release_json="$(curl --fail --silent --show-error \
+    --http1.1 \
     --retry 5 --retry-all-errors --retry-delay 5 \
     --connect-timeout 20 --max-time 60 \
     -H 'Accept: application/vnd.github+json' \
@@ -36,6 +37,7 @@ if [ -n "$GH_TOKEN" ]; then
     "$releases_url")"
 else
   release_json="$(curl --fail --silent --show-error \
+    --http1.1 \
     --retry 5 --retry-all-errors --retry-delay 5 \
     --connect-timeout 20 --max-time 60 \
     -H 'Accept: application/vnd.github+json' \
