@@ -59,6 +59,7 @@ jobs:
       CHANNEL: ${{ matrix.channel }}
       ARCH: ${{ matrix.arch }}
       OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}/${{ matrix.arch }}
+      PKGNAME_SPEC: https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v${version}/sing-box_${version}_openwrt_${arch}.apk
 
     steps:
       - uses: actions/checkout@v5
