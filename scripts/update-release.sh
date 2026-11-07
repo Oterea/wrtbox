@@ -1,19 +1,38 @@
 #!/bin/sh
 set -eu
 
-# This script is run on GitHub Actions. It reads the latest stable sing-box
-# release from the GitHub API, then downloads the official OpenWrt APK asset
-# for each requested architecture. It never runs on the router.
+# This script is run on GitHub Actions. It reads the latest stable or
+# prerelease sing-box release from the GitHub API, then downloads the official
+# OpenWrt APK asset for each requested architecture. It never runs on the router.
 
 : "${GITHUB_OUTPUT:=/dev/null}"
 : "${ARCH:=aarch64_generic}"
-: "${OUT_DIR:=dist/openwrt-25.12/${ARCH}}"
+: "${OPENWRT_SERIES:=25.12}"
+: "${CHANNEL:=stable}"
+: "${OUT_DIR:=dist/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}}"
+
+case "$CHANNEL" in
+  stable)
+    releases_url="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+    ;;
+  beta)
+    releases_url="https://api.github.com/repos/SagerNet/sing-box/releases?per_page=100"
+    ;;
+  *)
+    echo "Unsupported channel: $CHANNEL" >&2
+    exit 1
+    ;;
+esac
 
 mkdir -p "$OUT_DIR"
 
 release_json="$(curl --fail --silent --show-error \
   -H 'Accept: application/vnd.github+json' \
-  https://api.github.com/repos/SagerNet/sing-box/releases/latest)"
+  "$releases_url")"
+
+if [ "$CHANNEL" = beta ]; then
+  release_json="$(printf '%s' "$release_json" | jq -c 'map(select(.prerelease == true)) | .[0]')"
+fi
 
 version="$(printf '%s' "$release_json" | jq -r '.tag_name')"
 [ -n "$version" ] && [ "$version" != "null" ]

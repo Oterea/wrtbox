@@ -12,6 +12,15 @@ fi
 
 . /etc/openwrt_release
 
+CHANNEL="${1:-stable}"
+case "$CHANNEL" in
+    stable|beta) ;;
+    *)
+        echo "Usage: feed.sh [stable|beta]" >&2
+        exit 1
+        ;;
+esac
+
 case "${DISTRIB_RELEASE:-}" in
     *25.12*) SERIES="25.12" ;;
     *)
@@ -28,7 +37,7 @@ if [ -z "$ARCH" ]; then
 fi
 
 REPOSITORY_URL="https://wrtbox.czuouo.workers.dev"
-FEED_URL="$REPOSITORY_URL/openwrt-$SERIES/$ARCH/packages.adb"
+FEED_URL="$REPOSITORY_URL/openwrt-$SERIES/$CHANNEL/$ARCH/packages.adb"
 KEY_FILE="/etc/apk/keys/wrtbox.pem"
 REPOSITORY_FILE="/etc/apk/repositories.d/customfeeds.list"
 
@@ -46,11 +55,11 @@ fi
 
 # Keep other custom feeds (including momo) and replace only the wrtbox entry.
 touch "$REPOSITORY_FILE"
-sed -i '/wrtbox\.czuouo\.workers\.dev/d' "$REPOSITORY_FILE"
+sed -i '\|^https://wrtbox\.czuouo\.workers\.dev/|d' "$REPOSITORY_FILE"
 echo "$FEED_URL" >> "$REPOSITORY_FILE"
 
 echo "Updating APK repositories"
 apk update
 
-echo "wrtbox feed configured for OpenWrt $SERIES ($ARCH)"
+echo "wrtbox $CHANNEL feed configured for OpenWrt $SERIES ($ARCH)"
 echo "Install or upgrade sing-box with: apk add sing-box"

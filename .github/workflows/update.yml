@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.arch }}-${{ matrix.series }}
+    name: ${{ matrix.arch }}-${{ matrix.series }}-${{ matrix.channel }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -47,11 +47,15 @@ jobs:
         # New branches can be added after their APK SDK and feed mapping exist.
         series:
           - "25.12"
+        channel:
+          - stable
+          - beta
 
     env:
       OPENWRT_SERIES: ${{ matrix.series }}
+      CHANNEL: ${{ matrix.channel }}
       ARCH: ${{ matrix.arch }}
-      OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.arch }}
+      OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}/${{ matrix.arch }}
 
     steps:
       - uses: actions/checkout@v5
@@ -87,6 +91,8 @@ jobs:
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
             SIGN_KEY="$RUNNER_TEMP/wrtbox-private-key.pem" \
             ARCH="$ARCH" \
+            OPENWRT_SERIES="$OPENWRT_SERIES" \
+            CHANNEL="$CHANNEL" \
             FEED_DIR="$OUT_DIR" \
             sh ./scripts/build-feed.sh
           rm -f "$RUNNER_TEMP/wrtbox-private-key.pem"
@@ -100,11 +106,16 @@ jobs:
           apk_name="$(basename "$apk_path")"
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
           test -n "$version"
-          tag="sing-box-v$version"
+          tag="sing-box-${CHANNEL}-v$version"
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            title="sing-box $version"
+            notes="Signed official sing-box OpenWrt APK for the wrtbox $CHANNEL feed."
+            if [ "$CHANNEL" = beta ]; then
+              title="sing-box $version beta"
+            fi
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --title "sing-box $version" \
-              --notes "Signed official sing-box OpenWrt APK for the wrtbox feed." \
+              --title "$title" \
+              --notes "$notes" \
               || true
           fi
           gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber
@@ -112,13 +123,13 @@ jobs:
 
       - name: Stage feed index artifact
         run: |
-          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${ARCH}"
-          cp "$OUT_DIR/packages.adb" "artifact/openwrt-${OPENWRT_SERIES}/${ARCH}/packages.adb"
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}"
+          cp "$OUT_DIR/packages.adb" "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}/packages.adb"
 
       - name: Upload feed index artifact
         uses: actions/upload-artifact@v7
         with:
-          name: feed-${{ matrix.series }}-${{ matrix.arch }}
+          name: feed-${{ matrix.series }}-${{ matrix.channel }}-${{ matrix.arch }}
           path: artifact
 
   deploy:

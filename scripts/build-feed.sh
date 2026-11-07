@@ -8,8 +8,10 @@ set -eu
 : "${APK_TOOL:?APK_TOOL is required}"
 : "${SIGN_KEY:?SIGN_KEY is required}"
 : "${ARCH:=aarch64_generic}"
-: "${FEED_DIR:=dist/openwrt-25.12/${ARCH}}"
-: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
+: "${OPENWRT_SERIES:=25.12}"
+: "${CHANNEL:=stable}"
+: "${FEED_DIR:=dist/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}}"
+: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-${CHANNEL}-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
 
 mkdir -p "$FEED_DIR"
 
