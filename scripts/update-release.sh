@@ -46,10 +46,24 @@ asset_url="$(printf '%s' "$release_json" | jq -r --arg arch "$ARCH" '
 [ -n "$asset_url" ]
 asset_name="${asset_url##*/}"
 
-curl --fail --location --silent --show-error \
-  --retry 5 --retry-all-errors --retry-delay 5 \
+asset_tmp="$OUT_DIR/$asset_name.part"
+downloaded=0
+for download_url in \
   "$asset_url" \
-  -o "$OUT_DIR/$asset_name"
+  "https://gh-proxy.org/$asset_url"; do
+  echo "Trying sing-box APK: $download_url"
+  if curl --fail --location --silent --show-error \
+    --retry 5 --retry-all-errors --retry-delay 5 \
+    --connect-timeout 20 --max-time 300 \
+    "$download_url" -o "$asset_tmp"; then
+    downloaded=1
+    break
+  fi
+  rm -f "$asset_tmp"
+done
+
+test "$downloaded" = 1
+mv "$asset_tmp" "$OUT_DIR/$asset_name"
 
 printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
 printf 'asset=%s\n' "$asset_name" >> "$GITHUB_OUTPUT"
