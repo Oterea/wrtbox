@@ -1,5 +1,0 @@
-name = "wrtbox"
-compatibility_date = "2026-11-06"
-
-[assets]
-directory = "./dist"

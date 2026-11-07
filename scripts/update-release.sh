@@ -5,7 +5,6 @@ set -eu
 # prerelease sing-box release from the GitHub API, then downloads the official
 # OpenWrt APK asset for each requested architecture. It never runs on the router.
 
-: "${GITHUB_OUTPUT:=/dev/null}"
 : "${ARCH:=aarch64_generic}"
 : "${OPENWRT_SERIES:=25.12}"
 : "${CHANNEL:=stable}"
@@ -78,6 +77,3 @@ done
 
 test "$downloaded" = 1
 mv "$asset_tmp" "$OUT_DIR/$asset_name"
-
-printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-printf 'asset=%s\n' "$asset_name" >> "$GITHUB_OUTPUT"
