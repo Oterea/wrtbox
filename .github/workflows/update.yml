@@ -146,14 +146,19 @@ jobs:
                 --notes "$notes"
             fi
           else
-            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            # Matrix jobs finish at different times. The aarch64_generic job
+            # creates the release; allow the other jobs enough time to see it.
+            for attempt in $(seq 1 120); do
               if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
                 break
               fi
               sleep 5
             done
           fi
-          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Timed out waiting for release: $tag" >&2
+            exit 1
+          fi
           for attempt in 1 2 3 4 5; do
             if gh release upload "$tag" "$release_asset" --repo "$GITHUB_REPOSITORY" --clobber; then
               break
