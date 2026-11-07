@@ -60,7 +60,7 @@ jobs:
       ARCH: ${{ matrix.arch }}
       OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}/${{ matrix.arch }}
       # apk's ${version} includes the package revision (for example 1.14.4-r0).
-      # Release tags and asset names use the same value.
+      # The publish step reads the exact value from the APK metadata.
       PKGNAME_SPEC: https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v${version}/sing-box_${version}_openwrt_${arch}.apk
 
     steps:
@@ -129,9 +129,11 @@ jobs:
           apk_name="$(basename "$apk_path")"
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
           test -n "$version"
-          # The upstream file name omits apk's package revision. Publish a
-          # copy under the exact name requested by the index template.
-          package_version="$version-r0"
+          # The upstream file name omits apk's package revision. Read the
+          # package version from the APK so r0/r1/r2 remain automatic.
+          apk_tool="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk"
+          package_version="$($apk_tool adbdump "$apk_path" | sed -n 's/^[[:space:]]*version: //p' | head -n 1)"
+          test -n "$package_version"
           tag="sing-box-v$package_version"
           release_asset="$RUNNER_TEMP/sing-box_${package_version}_openwrt_${ARCH}.apk"
           cp "$apk_path" "$release_asset"

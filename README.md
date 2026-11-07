@@ -78,7 +78,9 @@ The feed currently targets `gh-proxy.org` for the APK asset because Cloudflare s
 Stable follows the latest official GitHub release. The two channels use
 release tags that include the APK package revision (for example
 `sing-box-v1.14.4-r0`), matching apk's `${version}` expansion in the index
-URL. The feed path continues to distinguish the stable and beta channels.
+URL. The workflow reads that revision from the APK metadata, so a future
+`r1` or `r2` is handled automatically. The feed path continues to
+distinguish the stable and beta channels.
 
 ## 支持范围
 
