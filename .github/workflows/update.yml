@@ -124,14 +124,23 @@ jobs:
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
           test -n "$version"
           tag="sing-box-v$version"
-          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            title="sing-box $version"
-            notes="Signed official sing-box OpenWrt APK for the wrtbox feed."
-            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --title "$title" \
-              --notes "$notes" \
-              || true
+          if [ "$ARCH" = "aarch64_generic" ]; then
+            if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              title="sing-box $version"
+              notes="Signed official sing-box OpenWrt APK for the wrtbox feed."
+              gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+                --title "$title" \
+                --notes "$notes"
+            fi
+          else
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+                break
+              fi
+              sleep 5
+            done
           fi
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1
           for attempt in 1 2 3 4 5; do
             if gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber; then
               break
