@@ -9,7 +9,9 @@ permissions:
   contents: write
 
 env:
-  OPENWRT_SDK_URL: "https://mirror.sjtu.edu.cn/openwrt/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+  OPENWRT_SDK_URLS: >-
+    https://downloads.openwrt.org/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+    https://mirror.sjtu.edu.cn/openwrt/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
 
 jobs:
   build:
@@ -77,9 +79,23 @@ jobs:
         if: steps.sdk-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/openwrt-sdk"
-          curl --fail --location --silent --show-error --retry 3 \
-            --connect-timeout 20 --max-time 300 "$OPENWRT_SDK_URL" \
-            | tar --zstd -x -f - --strip-components=1 -C "$RUNNER_TEMP/openwrt-sdk"
+          sdk_archive="$RUNNER_TEMP/openwrt-sdk.tar.zst"
+          downloaded=0
+          for sdk_url in $OPENWRT_SDK_URLS; do
+            echo "Trying OpenWrt SDK: $sdk_url"
+            if curl --fail --location --silent --show-error \
+              --retry 5 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 20 --max-time 300 "$sdk_url" \
+              -o "$sdk_archive"; then
+              downloaded=1
+              break
+            fi
+            rm -f "$sdk_archive"
+          done
+          test "$downloaded" = 1
+          tar --zstd -x -f "$sdk_archive" \
+            --strip-components=1 -C "$RUNNER_TEMP/openwrt-sdk"
+          rm -f "$sdk_archive"
           test -x "$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk"
 
       - name: Sign package and build index
@@ -115,7 +131,15 @@ jobs:
               --notes "$notes" \
               || true
           fi
-          gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber; then
+              break
+            fi
+            if [ "$attempt" = 5 ]; then
+              exit 1
+            fi
+            sleep 5
+          done
           rm -f "$apk_path"
 
       - name: Stage feed index artifact

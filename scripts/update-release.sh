@@ -47,6 +47,7 @@ asset_url="$(printf '%s' "$release_json" | jq -r --arg arch "$ARCH" '
 asset_name="${asset_url##*/}"
 
 curl --fail --location --silent --show-error \
+  --retry 5 --retry-all-errors --retry-delay 5 \
   "$asset_url" \
   -o "$OUT_DIR/$asset_name"
 
