@@ -59,6 +59,8 @@ jobs:
       CHANNEL: ${{ matrix.channel }}
       ARCH: ${{ matrix.arch }}
       OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}/${{ matrix.arch }}
+      # apk's ${version} includes the package revision (for example 1.14.4-r0).
+      # Release tags and asset names use the same value.
       PKGNAME_SPEC: https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v${version}/sing-box_${version}_openwrt_${arch}.apk
 
     steps:
@@ -127,10 +129,15 @@ jobs:
           apk_name="$(basename "$apk_path")"
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
           test -n "$version"
-          tag="sing-box-v$version"
+          # The upstream file name omits apk's package revision. Publish a
+          # copy under the exact name requested by the index template.
+          package_version="$version-r0"
+          tag="sing-box-v$package_version"
+          release_asset="$RUNNER_TEMP/sing-box_${package_version}_openwrt_${ARCH}.apk"
+          cp "$apk_path" "$release_asset"
           if [ "$ARCH" = "aarch64_generic" ]; then
             if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              title="sing-box $version"
+              title="sing-box $package_version"
               notes="Signed official sing-box OpenWrt APK for the wrtbox feed."
               gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
                 --title "$title" \
@@ -146,7 +153,7 @@ jobs:
           fi
           gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1
           for attempt in 1 2 3 4 5; do
-            if gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber; then
+            if gh release upload "$tag" "$release_asset" --repo "$GITHUB_REPOSITORY" --clobber; then
               break
             fi
             if [ "$attempt" = 5 ]; then
@@ -154,6 +161,7 @@ jobs:
             fi
             sleep 5
           done
+          rm -f "$release_asset"
           rm -f "$apk_path"
 
       - name: Stage feed index artifact
