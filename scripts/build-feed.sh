@@ -9,9 +9,20 @@ set -eu
 : "${SIGN_KEY:?SIGN_KEY is required}"
 : "${ARCH:=aarch64_generic}"
 : "${FEED_DIR:=dist/openwrt-25.12/${ARCH}}"
-: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/SagerNet/sing-box/releases/download/v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
+: "${PKGNAME_SPEC:=https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk}"
 
 mkdir -p "$FEED_DIR"
+
+# The upstream release APK is an official prebuilt binary, but its package
+# signature is not trusted by OpenWrt. Re-sign the unchanged APK container with
+# this feed's key so apk/LuCI can install it without --allow-untrusted.
+for package in "$FEED_DIR"/*.apk; do
+  [ -f "$package" ] || continue
+  "$APK_TOOL" --allow-untrusted adbsign \
+    --sign-key "$SIGN_KEY" \
+    --reset-signatures \
+    "$package"
+done
 
 "$APK_TOOL" mkndx --allow-untrusted \
   --sign-key "$SIGN_KEY" \
@@ -19,7 +30,6 @@ mkdir -p "$FEED_DIR"
   --output "$FEED_DIR/packages.adb" \
   "$FEED_DIR"/*.apk
 
-# Cloudflare's static asset limit is smaller than the official sing-box APK.
-# The index points at the proxied upstream Release asset, so do not publish
-# the local APK through the Worker.
-rm -f "$FEED_DIR"/*.apk
+# The workflow uploads the signed APK to a GitHub Release before deploying the
+# feed. The package is removed from dist later because Cloudflare's static
+# asset limit is smaller than the APK.

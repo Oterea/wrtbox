@@ -6,7 +6,7 @@ on:
     - cron: "17 3 * * *"
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   OPENWRT_SERIES: "25.12"
@@ -47,6 +47,24 @@ jobs:
             FEED_DIR="$OUT_DIR" \
             sh ./scripts/build-feed.sh
           rm -f "$RUNNER_TEMP/wrtbox-private-key.pem"
+
+      - name: Publish signed APK release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk_path="$(find "$OUT_DIR" -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$apk_path"
+          apk_name="$(basename "$apk_path")"
+          version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
+          test -n "$version"
+          tag="sing-box-v$version"
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+              --title "sing-box $version (OpenWrt)" \
+              --notes "Signed official sing-box OpenWrt APK for the wrtbox feed."
+          fi
+          gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber
+          rm -f "$apk_path"
 
       - name: Publish feed installer
         run: cp scripts/feed.sh dist/feed.sh
