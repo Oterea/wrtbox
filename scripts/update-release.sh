@@ -27,14 +27,20 @@ esac
 
 mkdir -p "$OUT_DIR"
 
-api_headers="-H Accept: application/vnd.github+json"
 if [ -n "$GH_TOKEN" ]; then
-  api_headers="$api_headers -H Authorization: Bearer $GH_TOKEN"
+  release_json="$(curl --fail --silent --show-error \
+    --retry 5 --retry-all-errors --retry-delay 5 \
+    --connect-timeout 20 --max-time 60 \
+    -H 'Accept: application/vnd.github+json' \
+    -H "Authorization: Bearer $GH_TOKEN" \
+    "$releases_url")"
+else
+  release_json="$(curl --fail --silent --show-error \
+    --retry 5 --retry-all-errors --retry-delay 5 \
+    --connect-timeout 20 --max-time 60 \
+    -H 'Accept: application/vnd.github+json' \
+    "$releases_url")"
 fi
-release_json="$(curl --fail --silent --show-error \
-  --retry 5 --retry-all-errors --retry-delay 5 \
-  --connect-timeout 20 --max-time 60 \
-  $api_headers "$releases_url")"
 
 if [ "$CHANNEL" = beta ]; then
   release_json="$(printf '%s' "$release_json" | jq -c 'map(select(.prerelease == true)) | .[0]')"
