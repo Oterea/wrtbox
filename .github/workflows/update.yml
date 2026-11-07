@@ -106,13 +106,10 @@ jobs:
           apk_name="$(basename "$apk_path")"
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
           test -n "$version"
-          tag="sing-box-${CHANNEL}-v$version"
+          tag="sing-box-v$version"
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             title="sing-box $version"
-            notes="Signed official sing-box OpenWrt APK for the wrtbox $CHANNEL feed."
-            if [ "$CHANNEL" = beta ]; then
-              title="sing-box $version beta"
-            fi
+            notes="Signed official sing-box OpenWrt APK for the wrtbox feed."
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
               --title "$title" \
               --notes "$notes" \

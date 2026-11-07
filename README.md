@@ -76,8 +76,8 @@ be extended to add that series without changing the existing 25.12 URL.
 The feed currently targets `gh-proxy.org` for the APK asset because Cloudflare static assets have a 25 MiB per-file limit while the official sing-box APK is larger. The feed index and signing key remain hosted by the wrtbox Worker; the signed package is published in this repository's GitHub Release assets.
 
 Stable follows the latest official GitHub release. The two channels use
-separate repository paths and release tags (`sing-box-stable-v...` and
-`sing-box-beta-v...`).
+the official version tag (`sing-box-v...`); the feed path continues to
+distinguish the stable and beta channels.
 
 ## 支持范围
 
