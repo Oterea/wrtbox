@@ -48,7 +48,12 @@ be extended to add that series without changing the existing 25.12 URL.
 
 The feed currently targets `gh-proxy.org` for the APK asset because Cloudflare static assets have a 25 MiB per-file limit while the official sing-box APK is larger. The feed index and signing key remain hosted by the wrtbox Worker; the signed package is published in this repository's GitHub Release assets.
 
-The first rollout targets `aarch64_generic`. More OpenWrt 25.12 architectures can be added to the workflow matrix later.
+The workflow currently publishes the OpenWrt 25.12 APK feed for the official
+sing-box architecture set used by the matrix, including `aarch64_generic`,
+`aarch64_cortex-a53`, `x86_64`, MIPS, ARM, RISC-V, and LoongArch variants.
+OpenWrt 24.10 is not included because it uses opkg/IPK rather than APK. New
+APK-based OpenWrt series can be added as another matrix branch after their SDK
+and feed mapping are available.
 
 ## Security
 

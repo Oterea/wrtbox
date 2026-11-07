@@ -9,15 +9,50 @@ permissions:
   contents: write
 
 env:
-  OPENWRT_SERIES: "25.12"
   OPENWRT_SDK_URL: "https://mirror.sjtu.edu.cn/openwrt/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
 
 jobs:
-  update:
+  build:
+    name: ${{ matrix.arch }}-${{ matrix.series }}
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # These names match the official sing-box OpenWrt APK assets and
+        # OpenWrt package architectures used by momo's feed.
+        arch:
+          - arm_cortex-a5_vfpv4
+          - arm_cortex-a7_neon-vfpv4
+          - arm_cortex-a8_vfpv3
+          - arm_cortex-a9
+          - arm_cortex-a9_vfpv3-d16
+          - arm_cortex-a9_neon
+          - arm_cortex-a15_neon-vfpv4
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - aarch64_cortex-a76
+          - aarch64_generic
+          - mips_24kc
+          - mips_mips32
+          - mipsel_24kc
+          - mipsel_24kc_24kf
+          - mipsel_74kc
+          - mipsel_mips32
+          - mips64_octeonplus
+          - riscv64_generic
+          - loongarch64_generic
+          - i386_pentium4
+          - x86_64
+        # OpenWrt 24.10 uses opkg/ipk, so this APK feed starts at 25.12.
+        # New branches can be added after their APK SDK and feed mapping exist.
+        series:
+          - "25.12"
+
     env:
-      ARCH: aarch64_generic
-      OUT_DIR: dist/openwrt-25.12/aarch64_generic
+      OPENWRT_SERIES: ${{ matrix.series }}
+      ARCH: ${{ matrix.arch }}
+      OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.arch }}
+
     steps:
       - uses: actions/checkout@v5
 
@@ -27,14 +62,14 @@ jobs:
       - name: Download official sing-box APK
         run: sh ./scripts/update-release.sh
 
-      - name: Download OpenWrt APK tooling
+      - name: Restore OpenWrt SDK cache
         id: sdk-cache
         uses: actions/cache@v5
         with:
           path: ${{ runner.temp }}/openwrt-sdk
           key: openwrt-sdk-25.12.2-armsr-armv8-apktools-${{ runner.os }}
 
-      - name: Extract OpenWrt APK tooling
+      - name: Download and extract OpenWrt APK tooling
         if: steps.sdk-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/openwrt-sdk"
@@ -43,13 +78,12 @@ jobs:
             | tar --zstd -x -f - --strip-components=1 -C "$RUNNER_TEMP/openwrt-sdk"
           test -x "$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk"
 
-      - name: Sign packages and build index
+      - name: Sign package and build index
         env:
           APK_SIGN_PRIVATE_KEY: ${{ secrets.APK_SIGN_PRIVATE_KEY }}
         run: |
           test -n "$APK_SIGN_PRIVATE_KEY"
           printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$RUNNER_TEMP/wrtbox-private-key.pem"
-          cp public-key.pem dist/public-key.pem
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
             SIGN_KEY="$RUNNER_TEMP/wrtbox-private-key.pem" \
             ARCH="$ARCH" \
@@ -70,13 +104,41 @@ jobs:
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
               --title "sing-box $version (OpenWrt)" \
-              --notes "Signed official sing-box OpenWrt APK for the wrtbox feed."
+              --notes "Signed official sing-box OpenWrt APK for the wrtbox feed." \
+              || true
           fi
           gh release upload "$tag" "$apk_path" --repo "$GITHUB_REPOSITORY" --clobber
           rm -f "$apk_path"
 
-      - name: Publish feed installer
-        run: cp scripts/feed.sh dist/feed.sh
+      - name: Stage feed index artifact
+        run: |
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${ARCH}"
+          cp "$OUT_DIR/packages.adb" "artifact/openwrt-${OPENWRT_SERIES}/${ARCH}/packages.adb"
+
+      - name: Upload feed index artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: feed-${{ matrix.series }}-${{ matrix.arch }}
+          path: artifact
+
+  deploy:
+    name: deploy-feed
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download feed indexes
+        uses: actions/download-artifact@v8
+        with:
+          pattern: feed-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish public feed files
+        run: |
+          cp public-key.pem dist/public-key.pem
+          cp scripts/feed.sh dist/feed.sh
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v5
