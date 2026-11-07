@@ -67,6 +67,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y curl jq zstd
 
       - name: Download official sing-box APK
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: sh ./scripts/update-release.sh
 
       - name: Restore OpenWrt SDK cache
@@ -104,15 +106,16 @@ jobs:
           APK_SIGN_PRIVATE_KEY: ${{ secrets.APK_SIGN_PRIVATE_KEY }}
         run: |
           test -n "$APK_SIGN_PRIVATE_KEY"
-          printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$RUNNER_TEMP/wrtbox-private-key.pem"
+          key_file="$RUNNER_TEMP/wrtbox-private-key.pem"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$key_file"
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
-            SIGN_KEY="$RUNNER_TEMP/wrtbox-private-key.pem" \
+            SIGN_KEY="$key_file" \
             ARCH="$ARCH" \
             OPENWRT_SERIES="$OPENWRT_SERIES" \
             CHANNEL="$CHANNEL" \
             FEED_DIR="$OUT_DIR" \
             sh ./scripts/build-feed.sh
-          rm -f "$RUNNER_TEMP/wrtbox-private-key.pem"
 
       - name: Publish signed APK release asset
         env:

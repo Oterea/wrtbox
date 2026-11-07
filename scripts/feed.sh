@@ -44,14 +44,19 @@ REPOSITORY_FILE="/etc/apk/repositories.d/customfeeds.list"
 mkdir -p "$(dirname "$KEY_FILE")" "$(dirname "$REPOSITORY_FILE")"
 
 echo "Installing wrtbox signing key"
+KEY_TMP="${KEY_FILE}.tmp.$$"
+trap 'rm -f "$KEY_TMP"' EXIT
 if command -v wget >/dev/null 2>&1; then
-    wget -q -O "$KEY_FILE" "$REPOSITORY_URL/public-key.pem"
+    wget -q -t 5 -T 20 \
+        -O "$KEY_TMP" "$REPOSITORY_URL/public-key.pem"
 elif command -v curl >/dev/null 2>&1; then
-    curl -fsSL -o "$KEY_FILE" "$REPOSITORY_URL/public-key.pem"
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+        -o "$KEY_TMP" "$REPOSITORY_URL/public-key.pem"
 else
     echo "Neither wget nor curl is available." >&2
     exit 1
 fi
+mv "$KEY_TMP" "$KEY_FILE"
 
 # Keep other custom feeds (including momo) and replace only the wrtbox entry.
 touch "$REPOSITORY_FILE"
@@ -59,7 +64,15 @@ sed -i '\|^https://wrtbox\.czuouo\.workers\.dev/|d' "$REPOSITORY_FILE"
 echo "$FEED_URL" >> "$REPOSITORY_FILE"
 
 echo "Updating APK repositories"
-apk update
+updated=0
+for attempt in 1 2 3 4 5; do
+    if apk update; then
+        updated=1
+        break
+    fi
+    sleep 2
+done
+test "$updated" = 1
 
 echo "wrtbox $CHANNEL feed configured for OpenWrt $SERIES ($ARCH)"
 echo "Install or upgrade sing-box with: apk add sing-box"
