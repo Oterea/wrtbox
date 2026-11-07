@@ -26,22 +26,43 @@ esac
 
 mkdir -p "$OUT_DIR"
 
-if [ -n "$GH_TOKEN" ]; then
-  release_json="$(curl --fail --silent --show-error \
-    --http1.1 \
-    --retry 5 --retry-all-errors --retry-delay 5 \
-    --connect-timeout 20 --max-time 60 \
-    -H 'Accept: application/vnd.github+json' \
-    -H "Authorization: Bearer $GH_TOKEN" \
-    "$releases_url")"
-else
-  release_json="$(curl --fail --silent --show-error \
-    --http1.1 \
-    --retry 5 --retry-all-errors --retry-delay 5 \
-    --connect-timeout 20 --max-time 60 \
-    -H 'Accept: application/vnd.github+json' \
-    "$releases_url")"
-fi
+# Keep the API response in a file and validate it before parsing. A truncated
+# HTTP response must not be passed to jq as if it were a complete document.
+release_json_file="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/sing-box-release.json"
+release_downloaded=0
+for attempt in 1 2 3 4 5 6; do
+  rm -f "$release_json_file"
+  if [ -n "$GH_TOKEN" ]; then
+    if ! curl --fail --silent --show-error \
+      --http1.1 \
+      --retry 5 --retry-all-errors --retry-delay 5 \
+      --connect-timeout 20 --max-time 60 \
+      -H 'Accept: application/vnd.github+json' \
+      -H "Authorization: Bearer $GH_TOKEN" \
+      "$releases_url" -o "$release_json_file"; then
+      sleep 5
+      continue
+    fi
+  else
+    if ! curl --fail --silent --show-error \
+      --http1.1 \
+      --retry 5 --retry-all-errors --retry-delay 5 \
+      --connect-timeout 20 --max-time 60 \
+      -H 'Accept: application/vnd.github+json' \
+      "$releases_url" -o "$release_json_file"; then
+      sleep 5
+      continue
+    fi
+  fi
+  if jq -e 'type == "object" or type == "array"' "$release_json_file" >/dev/null 2>&1; then
+    release_downloaded=1
+    break
+  fi
+  sleep 5
+done
+test "$release_downloaded" = 1
+release_json="$(cat "$release_json_file")"
+rm -f "$release_json_file"
 
 if [ "$CHANNEL" = beta ]; then
   release_json="$(printf '%s' "$release_json" | jq -c 'map(select(.prerelease == true)) | .[0]')"
