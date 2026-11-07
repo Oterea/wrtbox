@@ -103,7 +103,7 @@ jobs:
           tag="sing-box-v$version"
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --title "sing-box $version (OpenWrt)" \
+              --title "sing-box $version" \
               --notes "Signed official sing-box OpenWrt APK for the wrtbox feed." \
               || true
           fi
