@@ -58,7 +58,7 @@ wget -O - https://wrtbox.pages.dev/feed.sh | ash -s beta
 ### 手动配置
 
 ```sh
-apk add curl ca-bundle
+apk add ca-bundle
 wget -O /etc/apk/keys/wrtbox.pem https://wrtbox.pages.dev/public-key.pem
 ARCH="$(cat /etc/apk/arch)"
 echo "https://wrtbox.pages.dev/openwrt-25.12/stable/${ARCH}/packages.adb" \

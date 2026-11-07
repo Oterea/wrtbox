@@ -46,25 +46,22 @@ mkdir -p "$(dirname "$KEY_FILE")" "$(dirname "$REPOSITORY_FILE")"
 echo "Installing wrtbox signing key"
 KEY_TMP="${KEY_FILE}.tmp.$$"
 trap 'rm -f "$KEY_TMP"' EXIT
-if command -v wget >/dev/null 2>&1; then
-    downloaded=0
-    for attempt in 1 2 3 4 5; do
-        if wget -q -T 20 -O "$KEY_TMP" \
-            "$REPOSITORY_URL/public-key.pem"; then
-            downloaded=1
-            break
-        fi
-        rm -f "$KEY_TMP"
-        sleep 2
-    done
-    test "$downloaded" = 1
-elif command -v curl >/dev/null 2>&1; then
-    curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-        -o "$KEY_TMP" "$REPOSITORY_URL/public-key.pem"
-else
-    echo "Neither wget nor curl is available." >&2
+if ! command -v wget >/dev/null 2>&1; then
+    echo "BusyBox wget is required." >&2
     exit 1
 fi
+
+downloaded=0
+for attempt in 1 2 3 4 5; do
+    if wget -q -T 20 -O "$KEY_TMP" \
+        "$REPOSITORY_URL/public-key.pem"; then
+        downloaded=1
+        break
+    fi
+    rm -f "$KEY_TMP"
+    sleep 2
+done
+test "$downloaded" = 1
 mv "$KEY_TMP" "$KEY_FILE"
 
 # Keep other custom feeds (including momo) and replace only the wrtbox entry.
