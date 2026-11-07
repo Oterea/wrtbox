@@ -24,7 +24,7 @@ wget -O - https://wrtbox.czuouo.workers.dev/feed.sh | ash
 Then install from SSH if desired:
 
 ```sh
-apk add --force-overwrite sing-box
+apk add sing-box
 ```
 
 Or open LuCI **System → Software**, click **Update lists**, search for

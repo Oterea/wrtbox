@@ -53,4 +53,4 @@ echo "Updating APK repositories"
 apk update
 
 echo "wrtbox feed configured for OpenWrt $SERIES ($ARCH)"
-echo "Install sing-box with: apk add --force-overwrite sing-box"
+echo "Install or upgrade sing-box with: apk add sing-box"
