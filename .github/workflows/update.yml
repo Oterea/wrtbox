@@ -28,6 +28,14 @@ jobs:
         run: sh ./scripts/update-release.sh
 
       - name: Download OpenWrt APK tooling
+        id: sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/openwrt-sdk
+          key: openwrt-sdk-25.12.2-armsr-armv8-apktools-${{ runner.os }}
+
+      - name: Extract OpenWrt APK tooling
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/openwrt-sdk"
           curl --fail --location --silent --show-error --retry 3 \
