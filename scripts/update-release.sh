@@ -10,10 +10,15 @@ set -eu
 : "${CHANNEL:=stable}"
 : "${OUT_DIR:=dist/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}}"
 : "${GH_TOKEN:=${GITHUB_TOKEN:-}}"
+: "${SING_BOX_VERSION:=}"
 
 case "$CHANNEL" in
   stable)
-    releases_url="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+    if [ -n "$SING_BOX_VERSION" ]; then
+      releases_url="https://api.github.com/repos/SagerNet/sing-box/releases/tags/v${SING_BOX_VERSION}"
+    else
+      releases_url="https://api.github.com/repos/SagerNet/sing-box/releases/latest"
+    fi
     ;;
   beta)
     releases_url="https://api.github.com/repos/SagerNet/sing-box/releases?per_page=100"

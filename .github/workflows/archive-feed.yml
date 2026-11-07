@@ -1,0 +1,193 @@
+name: archive-feed
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Upstream sing-box version to archive"
+        required: true
+        default: "1.14.3"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive-feed
+  cancel-in-progress: false
+
+env:
+  OPENWRT_SDK_URLS: >-
+    https://downloads.openwrt.org/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+    https://mirror.sjtu.edu.cn/openwrt/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}-archive-${{ inputs.version }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - arm_cortex-a5_vfpv4
+          - arm_cortex-a7_neon-vfpv4
+          - arm_cortex-a8_vfpv3
+          - arm_cortex-a9
+          - arm_cortex-a9_vfpv3-d16
+          - arm_cortex-a9_neon
+          - arm_cortex-a15_neon-vfpv4
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - aarch64_cortex-a76
+          - aarch64_generic
+          - mips_24kc
+          - mips_mips32
+          - mipsel_24kc
+          - mipsel_24kc_24kf
+          - mipsel_74kc
+          - mipsel_mips32
+          - mips64_octeonplus
+          - riscv64_generic
+          - loongarch64_generic
+          - i386_pentium4
+          - x86_64
+
+    env:
+      OPENWRT_SERIES: "25.12"
+      CHANNEL: stable
+      ARCH: ${{ matrix.arch }}
+      ARCHIVE_VERSION: ${{ inputs.version }}
+      OUT_DIR: dist/openwrt-25.12/${{ inputs.version }}/${{ matrix.arch }}
+      PKGNAME_SPEC: https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/download/sing-box-v${version}/sing-box_${version}_openwrt_${arch}.apk
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y curl jq zstd
+
+      - name: Download archived sing-box APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SING_BOX_VERSION: ${{ inputs.version }}
+        run: sh ./scripts/update-release.sh
+
+      - name: Restore OpenWrt SDK cache
+        id: sdk-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}/openwrt-sdk
+          key: openwrt-sdk-25.12.2-armsr-armv8-apktools-${{ runner.os }}
+
+      - name: Download and extract OpenWrt APK tooling
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/openwrt-sdk"
+          sdk_archive="$RUNNER_TEMP/openwrt-sdk.tar.zst"
+          downloaded=0
+          for sdk_url in $OPENWRT_SDK_URLS; do
+            if curl --fail --location --silent --show-error \
+              --retry 5 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 20 --max-time 300 "$sdk_url" \
+              -o "$sdk_archive"; then
+              downloaded=1
+              break
+            fi
+            rm -f "$sdk_archive"
+          done
+          test "$downloaded" = 1
+          tar --zstd -x -f "$sdk_archive" \
+            --strip-components=1 -C "$RUNNER_TEMP/openwrt-sdk"
+          rm -f "$sdk_archive"
+          test -x "$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk"
+
+      - name: Sign package and build archive index
+        env:
+          APK_SIGN_PRIVATE_KEY: ${{ secrets.APK_SIGN_PRIVATE_KEY }}
+        run: |
+          test -n "$APK_SIGN_PRIVATE_KEY"
+          key_file="$RUNNER_TEMP/wrtbox-private-key.pem"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$key_file"
+          APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
+            SIGN_KEY="$key_file" \
+            ARCH="$ARCH" \
+            OPENWRT_SERIES="$OPENWRT_SERIES" \
+            CHANNEL="$CHANNEL" \
+            FEED_DIR="$OUT_DIR" \
+            PKGNAME_SPEC="$PKGNAME_SPEC" \
+            sh ./scripts/build-feed.sh
+
+      - name: Publish archived APK release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk_path="$(find "$OUT_DIR" -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$apk_path"
+          apk_tool="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk"
+          package_version="$($apk_tool adbdump "$apk_path" | sed -n 's/^[[:space:]]*version: //p' | head -n 1)"
+          test -n "$package_version"
+          tag="sing-box-v$package_version"
+          release_asset="$RUNNER_TEMP/sing-box_${package_version}_openwrt_${ARCH}.apk"
+          cp "$apk_path" "$release_asset"
+          if [ "$ARCH" = "aarch64_generic" ]; then
+            if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+                --title "sing-box $package_version" \
+                --notes "Signed archived sing-box OpenWrt APK for the wrtbox archive feed."
+            fi
+          else
+            for attempt in $(seq 1 120); do
+              if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+                break
+              fi
+              sleep 5
+            done
+          fi
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1
+          for attempt in 1 2 3 4 5; do
+            if gh release upload "$tag" "$release_asset" --repo "$GITHUB_REPOSITORY" --clobber; then
+              break
+            fi
+            test "$attempt" != 5
+            sleep 5
+          done
+          rm -f "$release_asset" "$apk_path"
+
+      - name: Stage archive index artifact
+        run: |
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${ARCHIVE_VERSION}/${ARCH}"
+          cp "$OUT_DIR/packages.adb" \
+            "artifact/openwrt-${OPENWRT_SERIES}/${ARCHIVE_VERSION}/${ARCH}/packages.adb"
+
+      - name: Upload archive index artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: archive-${{ inputs.version }}-${{ matrix.arch }}
+          path: artifact
+
+  deploy:
+    name: deploy-archive-feed
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: archive-${{ inputs.version }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish archive public key
+        run: cp public-key.pem dist/public-key.pem
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Deploy archive feed to wrtbox-archive Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 pages deploy dist --project-name wrtbox-archive
