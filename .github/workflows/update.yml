@@ -219,33 +219,15 @@ jobs:
             channel="$1"
             source_dir="dist/openwrt-25.12/$channel"
             staging_dir="$RUNNER_TEMP/$channel-apks"
-            archive="$RUNNER_TEMP/wrtbox-$channel-${GITHUB_RUN_ID}.tar.gz"
-            rm -rf "$staging_dir" "$archive"
+            rm -rf "$staging_dir"
             mkdir -p "$staging_dir"
             find "$source_dir" -type f -name '*.apk' -exec cp {} "$staging_dir/" \;
             test "$(find "$staging_dir" -type f -name '*.apk' | wc -l)" -gt 0
-            tar -czf "$archive" -C "$staging_dir" .
             for attempt in 1 2 3 4 5; do
-              if scp -O -q \
-                -i "$key_file" \
-                -o IdentitiesOnly=yes \
-                -o BatchMode=yes \
-                -o ConnectionAttempts=3 \
-                -o ConnectTimeout=30 \
-                -o ServerAliveInterval=30 \
-                -o UserKnownHostsFile="$known_hosts" \
-                "$archive" \
-                "ubuntu@$WRTBOX_SERVER:/tmp/" && \
-                ssh \
-                  -i "$key_file" \
-                  -o IdentitiesOnly=yes \
-                  -o BatchMode=yes \
-                  -o ConnectionAttempts=3 \
-                  -o ConnectTimeout=30 \
-                  -o ServerAliveInterval=30 \
-                  -o UserKnownHostsFile="$known_hosts" \
-                  "ubuntu@$WRTBOX_SERVER" \
-                  "tar -xzf /tmp/$(basename "$archive") -C /srv/wrtbox/$channel && rm -f /tmp/$(basename "$archive")"; then
+              if rsync -az --partial --inplace \
+                -e "ssh -i '$key_file' -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectionAttempts=3 -o ConnectTimeout=30 -o ServerAliveInterval=30 -o UserKnownHostsFile='$known_hosts'" \
+                "$staging_dir/" \
+                "ubuntu@$WRTBOX_SERVER:/srv/wrtbox/$channel/"; then
                 return 0
               fi
               echo "Upload attempt $attempt failed for $channel; retrying"
