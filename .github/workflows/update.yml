@@ -24,27 +24,7 @@ jobs:
         # These names match the official sing-box OpenWrt APK assets and
         # OpenWrt package architectures used by momo's feed.
         arch:
-          - arm_cortex-a5_vfpv4
-          - arm_cortex-a7_neon-vfpv4
-          - arm_cortex-a8_vfpv3
-          - arm_cortex-a9
-          - arm_cortex-a9_vfpv3-d16
-          - arm_cortex-a9_neon
-          - arm_cortex-a15_neon-vfpv4
-          - aarch64_cortex-a53
-          - aarch64_cortex-a72
-          - aarch64_cortex-a76
           - aarch64_generic
-          - mips_24kc
-          - mips_mips32
-          - mipsel_24kc
-          - mipsel_24kc_24kf
-          - mipsel_74kc
-          - mipsel_mips32
-          - mips64_octeonplus
-          - riscv64_generic
-          - loongarch64_generic
-          - i386_pentium4
           - x86_64
         # OpenWrt 24.10 uses opkg/ipk, so this APK feed starts at 25.12.
         # New branches can be added after their APK SDK and feed mapping exist.
@@ -243,6 +223,9 @@ jobs:
           wait "$stable_pid"
           wait "$beta_pid"
           rm -f "$key_file" "$known_hosts"
+          # APKs are served by the domestic server; Pages only receives the
+          # signed index, public key, and installer script.
+          find dist -type f -name '*.apk' -delete
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v5
