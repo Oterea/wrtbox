@@ -152,6 +152,13 @@ jobs:
             fi
             sleep 5
           done
+          # The upstream APK filename omits apk's package revision. Rename the
+          # artifact before it is staged and uploaded so it matches the URL
+          # generated from ${version} in packages.adb.
+          versioned_apk="$OUT_DIR/sing-box_${package_version}_openwrt_${ARCH}.apk"
+          if [ "$apk_path" != "$versioned_apk" ]; then
+            mv "$apk_path" "$versioned_apk"
+          fi
           rm -f "$release_asset"
 
       - name: Stage feed index artifact
