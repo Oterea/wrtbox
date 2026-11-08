@@ -219,7 +219,7 @@ jobs:
             channel="$1"
             export CHANNEL="$channel"
             find "dist/openwrt-25.12/$channel" -type f -name '*.apk' -print0 |
-              xargs -0 -n 1 -P 3 sh -c '
+              xargs -0 -n 1 -P 5 sh -c '
                 apk_path="$1"
                 for attempt in 1 2 3 4 5; do
                   if rsync -a --partial --inplace \
