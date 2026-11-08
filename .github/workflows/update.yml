@@ -45,7 +45,6 @@ jobs:
       # The publish step reads the exact value from the APK metadata.
       # APKs are served from the dedicated domestic static server. The feed
       # index and signing key remain on Pages.
-      PKGNAME_SPEC: http://${{ env.WRTBOX_SERVER }}/${{ matrix.channel }}/sing-box_${version}_openwrt_${arch}.apk
 
     steps:
       - uses: actions/checkout@v5
@@ -102,6 +101,7 @@ jobs:
             OPENWRT_SERIES="$OPENWRT_SERIES" \
             CHANNEL="$CHANNEL" \
             FEED_DIR="$OUT_DIR" \
+            PKGNAME_SPEC="http://${WRTBOX_SERVER}/${CHANNEL}/sing-box_\${version}_openwrt_\${arch}.apk" \
             sh ./scripts/build-feed.sh
 
       - name: Publish signed APK release asset
