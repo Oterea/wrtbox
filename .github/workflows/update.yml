@@ -205,13 +205,13 @@ jobs:
 
       - name: Upload APKs to domestic server
         env:
-          WRTBOX_SSH_PRIVATE_KEY: ${{ secrets.WRTBOX_SSH_PRIVATE_KEY }}
+          WRTBOX_SSH_PRIVATE_KEY_B64: ${{ secrets.WRTBOX_SSH_PRIVATE_KEY_B64 }}
           WRTBOX_SERVER: 43.142.80.44
         run: |
-          test -n "$WRTBOX_SSH_PRIVATE_KEY"
+          test -n "$WRTBOX_SSH_PRIVATE_KEY_B64"
           key_file="$RUNNER_TEMP/wrtbox-actions-key"
           known_hosts="$RUNNER_TEMP/wrtbox-known-hosts"
-          printf '%s' "$WRTBOX_SSH_PRIVATE_KEY" > "$key_file"
+          printf '%s' "$WRTBOX_SSH_PRIVATE_KEY_B64" | base64 --decode > "$key_file"
           chmod 600 "$key_file"
           ssh-keyscan -T 15 -H "$WRTBOX_SERVER" > "$known_hosts" 2>/dev/null
 
