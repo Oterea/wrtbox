@@ -73,7 +73,7 @@ The installer currently supports OpenWrt 25.12, including ImmortalWrt 25.12.
 When a new OpenWrt series is published, the feed workflow and installer can
 be extended to add that series without changing the existing 25.12 URL.
 
-The feed currently targets `gh-proxy.org` for the APK asset because Cloudflare static assets have a 25 MiB per-file limit while the official sing-box APK is larger. The feed index and signing key remain hosted by wrtbox Pages; the signed package is published in this repository's GitHub Release assets.
+The feed index and signing key are hosted by wrtbox Pages. Signed APK files are served from the dedicated domestic static server at `43.142.80.44`; stable and beta files are separated under `/stable/` and `/beta/`. GitHub Releases remain as an archive and fallback copy.
 
 Stable follows the latest official GitHub release. The two channels use
 release tags that include the APK package revision (for example
