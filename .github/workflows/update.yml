@@ -210,6 +210,7 @@ jobs:
       - name: Publish public feed files
         run: |
           cp public-key.pem dist/public-key.pem
+          cp scripts/feed.sh dist/feed.sh
 
       - name: Upload APKs to domestic server
         env:
