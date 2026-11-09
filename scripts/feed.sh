@@ -80,15 +80,16 @@ done
 test "$downloaded" = 1
 mv "$KEY_TMP" "$KEY_FILE"
 
-# In auto mode, prefer direct GitHub, then gh-proxy.org, then the domestic server.
+# In auto mode, prefer gh-proxy.org. If it fails, use direct GitHub while
+# sing-box is already running; otherwise use the domestic server for first install.
 if [ "$MODE" = auto ]; then
-    if pidof sing-box >/dev/null 2>&1 && \
-       wget -q -T 12 --spider \
-         "https://github.com/Oterea/wrtbox/releases/latest"; then
-        MODE=direct
-    elif wget -q -T 12 --spider \
+    if wget -q -T 12 --spider \
          "https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/latest"; then
         MODE=ghproxy
+    elif pidof sing-box >/dev/null 2>&1 && \
+         wget -q -T 12 --spider \
+           "https://github.com/Oterea/wrtbox/releases/latest"; then
+        MODE=direct
     else
         MODE=server
     fi

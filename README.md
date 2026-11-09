@@ -4,6 +4,34 @@ OpenWrt 25.12 / ImmortalWrt 25.12 的 sing-box APK Feed。
 
 下面命令只配置 Feed 并执行 `apk update`，不会安装或升级 sing-box。
 
+## 推荐使用方式
+
+始终优先使用 `ghproxy`：
+
+```sh
+wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable ghproxy
+```
+
+这条命令会配置 Feed 并执行 `apk update`，不会安装或升级 sing-box。
+
+如果 `ghproxy` 不可用：
+
+1. 第一次安装 sing-box，使用 `server`：
+
+   ```sh
+   wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
+   apk add sing-box
+   ```
+
+2. sing-box 已经运行后更新，使用 `direct`：
+
+   ```sh
+   wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
+   apk upgrade sing-box
+   ```
+
+使用 `auto` 时，脚本会按 `ghproxy → direct（sing-box 已运行）→ server（首次安装）` 的顺序选择。
+
 ## Pages 直连
 
 ### Stable / auto
