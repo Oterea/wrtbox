@@ -112,6 +112,7 @@ jobs:
           cp "$server_dir"/*.apk "$direct_dir/"
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
             SIGN_KEY="$key_file" \
+            SIGN_PACKAGE=0 \
             ARCH="$ARCH" \
             OPENWRT_SERIES="$OPENWRT_SERIES" \
             CHANNEL="$CHANNEL" \

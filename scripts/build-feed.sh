@@ -12,19 +12,24 @@ set -eu
 : "${CHANNEL:=stable}"
 : "${FEED_DIR:=dist/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}}"
 : "${PKGNAME_SPEC:?PKGNAME_SPEC is required}"
+: "${SIGN_PACKAGE:=1}"
 
 mkdir -p "$FEED_DIR"
 
 # The upstream release APK is an official prebuilt binary, but its package
 # signature is not trusted by OpenWrt. Re-sign the unchanged APK container with
 # this feed's key so apk/LuCI can install it without --allow-untrusted.
-for package in "$FEED_DIR"/*.apk; do
-  [ -f "$package" ] || continue
-  "$APK_TOOL" --allow-untrusted adbsign \
-    --sign-key "$SIGN_KEY" \
-    --reset-signatures \
-    "$package"
-done
+# A second index may reuse an already-signed APK; in that case skip signing so
+# the index hash remains identical to the published release asset.
+if [ "$SIGN_PACKAGE" = 1 ]; then
+  for package in "$FEED_DIR"/*.apk; do
+    [ -f "$package" ] || continue
+    "$APK_TOOL" --allow-untrusted adbsign \
+      --sign-key "$SIGN_KEY" \
+      --reset-signatures \
+      "$package"
+  done
+fi
 
 "$APK_TOOL" mkndx --allow-untrusted \
   --sign-key "$SIGN_KEY" \
