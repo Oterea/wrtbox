@@ -97,7 +97,8 @@ jobs:
           printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$key_file"
           server_dir="$OUT_DIR/server/$ARCH"
           direct_dir="$OUT_DIR/direct/$ARCH"
-          mkdir -p "$server_dir" "$direct_dir"
+          ghproxy_dir="$OUT_DIR/ghproxy/$ARCH"
+          mkdir -p "$server_dir" "$direct_dir" "$ghproxy_dir"
           mv "$OUT_DIR"/*.apk "$server_dir/"
 
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
@@ -118,6 +119,17 @@ jobs:
             CHANNEL="$CHANNEL" \
             FEED_DIR="$direct_dir" \
             PKGNAME_SPEC="https://github.com/${GITHUB_REPOSITORY}/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk" \
+            sh ./scripts/build-feed.sh
+
+          cp "$server_dir"/*.apk "$ghproxy_dir/"
+          APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
+            SIGN_KEY="$key_file" \
+            SIGN_PACKAGE=0 \
+            ARCH="$ARCH" \
+            OPENWRT_SERIES="$OPENWRT_SERIES" \
+            CHANNEL="$CHANNEL" \
+            FEED_DIR="$ghproxy_dir" \
+            PKGNAME_SPEC="https://gh-proxy.org/https://github.com/${GITHUB_REPOSITORY}/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk" \
             sh ./scripts/build-feed.sh
 
       - name: Publish signed APK release asset
@@ -181,10 +193,13 @@ jobs:
         run: |
           mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}"
           mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/direct/${ARCH}"
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/ghproxy/${ARCH}"
           cp "$OUT_DIR/server/$ARCH/packages.adb" \
             "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}/packages.adb"
           cp "$OUT_DIR/direct/$ARCH/packages.adb" \
             "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/direct/${ARCH}/packages.adb"
+          cp "$OUT_DIR/ghproxy/$ARCH/packages.adb" \
+            "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/ghproxy/${ARCH}/packages.adb"
           cp "$OUT_DIR/server/$ARCH"/*.apk \
             "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}/"
 

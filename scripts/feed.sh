@@ -25,15 +25,15 @@ esac
 case "$CHANNEL" in
     stable|beta) ;;
     *)
-        echo "Usage: feed.sh [stable|beta] [auto|server|direct]" >&2
+        echo "Usage: feed.sh [stable|beta] [auto|server|ghproxy|direct]" >&2
         exit 1
         ;;
 esac
 
 case "$MODE" in
-    auto|server|direct) ;;
+    auto|server|ghproxy|direct) ;;
     *)
-        echo "Usage: feed.sh [stable|beta] [auto|server|direct]" >&2
+        echo "Usage: feed.sh [stable|beta] [auto|server|ghproxy|direct]" >&2
         exit 1
         ;;
 esac
@@ -80,12 +80,15 @@ done
 test "$downloaded" = 1
 mv "$KEY_TMP" "$KEY_FILE"
 
-# In auto mode, use GitHub only when the core is running and GitHub is reachable.
+# In auto mode, prefer direct GitHub, then gh-proxy.org, then the domestic server.
 if [ "$MODE" = auto ]; then
     if pidof sing-box >/dev/null 2>&1 && \
        wget -q -T 12 --spider \
          "https://github.com/Oterea/wrtbox/releases/latest"; then
         MODE=direct
+    elif wget -q -T 12 --spider \
+         "https://gh-proxy.org/https://github.com/Oterea/wrtbox/releases/latest"; then
+        MODE=ghproxy
     else
         MODE=server
     fi

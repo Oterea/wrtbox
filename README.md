@@ -24,6 +24,12 @@ wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
 ```
 
+### Stable / ghproxy
+
+```sh
+wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable ghproxy
+```
+
 ### Beta / auto
 
 ```sh
@@ -40,6 +46,12 @@ wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta server
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta direct
+```
+
+### Beta / ghproxy
+
+```sh
+wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta ghproxy
 ```
 
 ## GitHub Raw 直连
