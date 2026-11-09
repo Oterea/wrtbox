@@ -40,7 +40,7 @@ jobs:
       OPENWRT_SERIES: ${{ matrix.series }}
       CHANNEL: ${{ matrix.channel }}
       ARCH: ${{ matrix.arch }}
-      OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}/${{ matrix.arch }}
+      OUT_DIR: dist/openwrt-${{ matrix.series }}/${{ matrix.channel }}
       # apk's ${version} includes the package revision (for example 1.14.4-r0).
       # The publish step reads the exact value from the APK metadata.
       # APKs are served from the dedicated domestic static server. The feed
@@ -95,20 +95,35 @@ jobs:
           key_file="$RUNNER_TEMP/wrtbox-private-key.pem"
           trap 'rm -f "$key_file"' EXIT
           printf '%s' "$APK_SIGN_PRIVATE_KEY" > "$key_file"
+          server_dir="$OUT_DIR/server/$ARCH"
+          direct_dir="$OUT_DIR/direct/$ARCH"
+          mkdir -p "$server_dir" "$direct_dir"
+          mv "$OUT_DIR"/*.apk "$server_dir/"
+
           APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
             SIGN_KEY="$key_file" \
             ARCH="$ARCH" \
             OPENWRT_SERIES="$OPENWRT_SERIES" \
             CHANNEL="$CHANNEL" \
-            FEED_DIR="$OUT_DIR" \
+            FEED_DIR="$server_dir" \
             PKGNAME_SPEC="http://${WRTBOX_SERVER}/${CHANNEL}/sing-box_\${version}_openwrt_\${arch}.apk" \
+            sh ./scripts/build-feed.sh
+
+          cp "$server_dir"/*.apk "$direct_dir/"
+          APK_TOOL="$RUNNER_TEMP/openwrt-sdk/staging_dir/host/bin/apk" \
+            SIGN_KEY="$key_file" \
+            ARCH="$ARCH" \
+            OPENWRT_SERIES="$OPENWRT_SERIES" \
+            CHANNEL="$CHANNEL" \
+            FEED_DIR="$direct_dir" \
+            PKGNAME_SPEC="https://github.com/${GITHUB_REPOSITORY}/releases/download/sing-box-v\${version}/sing-box_\${version}_openwrt_\${arch}.apk" \
             sh ./scripts/build-feed.sh
 
       - name: Publish signed APK release asset
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          apk_path="$(find "$OUT_DIR" -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          apk_path="$(find "$OUT_DIR/server/$ARCH" -maxdepth 1 -type f -name '*.apk' -print -quit)"
           test -n "$apk_path"
           apk_name="$(basename "$apk_path")"
           version="$(printf '%s' "$apk_name" | sed -n 's/^sing-box_\([^_]*\)_openwrt_.*/\1/p')"
@@ -155,7 +170,7 @@ jobs:
           # The upstream APK filename omits apk's package revision. Rename the
           # artifact before it is staged and uploaded so it matches the URL
           # generated from ${version} in packages.adb.
-          versioned_apk="$OUT_DIR/sing-box_${package_version}_openwrt_${ARCH}.apk"
+          versioned_apk="$OUT_DIR/server/$ARCH/sing-box_${package_version}_openwrt_${ARCH}.apk"
           if [ "$apk_path" != "$versioned_apk" ]; then
             mv "$apk_path" "$versioned_apk"
           fi
@@ -163,9 +178,14 @@ jobs:
 
       - name: Stage feed index artifact
         run: |
-          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}"
-          cp "$OUT_DIR/packages.adb" "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}/packages.adb"
-          cp "$OUT_DIR"/*.apk "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/${ARCH}/"
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}"
+          mkdir -p "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/direct/${ARCH}"
+          cp "$OUT_DIR/server/$ARCH/packages.adb" \
+            "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}/packages.adb"
+          cp "$OUT_DIR/direct/$ARCH/packages.adb" \
+            "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/direct/${ARCH}/packages.adb"
+          cp "$OUT_DIR/server/$ARCH"/*.apk \
+            "artifact/openwrt-${OPENWRT_SERIES}/${CHANNEL}/server/${ARCH}/"
 
       - name: Upload feed index artifact
         uses: actions/upload-artifact@v7
@@ -190,7 +210,6 @@ jobs:
       - name: Publish public feed files
         run: |
           cp public-key.pem dist/public-key.pem
-          cp scripts/feed.sh dist/feed.sh
 
       - name: Upload APKs to domestic server
         env:
@@ -206,7 +225,7 @@ jobs:
           upload_channel() {
             channel="$1"
             export CHANNEL="$channel"
-            find "dist/openwrt-25.12/$channel" -type f -name '*.apk' -print0 |
+            find "dist/openwrt-25.12/$channel/server" -type f -name '*.apk' -print0 |
               xargs -0 -n 1 -P 5 sh -c '
                 apk_path="$1"
                 for attempt in 1 2 3 4 5; do

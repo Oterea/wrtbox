@@ -1,9 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Install the wrtbox APK feed on OpenWrt/ImmortalWrt.
-# This script only configures the feed and refreshes the package index;
-# it does not install sing-box itself.
+# Configure the wrtbox APK feed on OpenWrt/ImmortalWrt.
+# This script only switches the feed and refreshes the package index.
 
 if [ ! -x /usr/bin/apk ]; then
     echo "This feed script requires an OpenWrt system using apk." >&2
@@ -12,11 +11,29 @@ fi
 
 . /etc/openwrt_release
 
-CHANNEL="${1:-stable}"
+case "${0##*/}" in
+    stable|beta)
+        CHANNEL="${0##*/}"
+        MODE="${1:-auto}"
+        ;;
+    *)
+        CHANNEL="${1:-stable}"
+        MODE="${2:-auto}"
+        ;;
+esac
+
 case "$CHANNEL" in
     stable|beta) ;;
     *)
-        echo "Usage: feed.sh [stable|beta]" >&2
+        echo "Usage: feed.sh [stable|beta] [auto|server|direct]" >&2
+        exit 1
+        ;;
+esac
+
+case "$MODE" in
+    auto|server|direct) ;;
+    *)
+        echo "Usage: feed.sh [stable|beta] [auto|server|direct]" >&2
         exit 1
         ;;
 esac
@@ -37,7 +54,6 @@ if [ -z "$ARCH" ]; then
 fi
 
 REPOSITORY_URL="https://wrtbox.pages.dev"
-FEED_URL="$REPOSITORY_URL/openwrt-$SERIES/$CHANNEL/$ARCH/packages.adb"
 KEY_FILE="/etc/apk/keys/wrtbox.pem"
 REPOSITORY_FILE="/etc/apk/repositories.d/customfeeds.list"
 
@@ -64,11 +80,26 @@ done
 test "$downloaded" = 1
 mv "$KEY_TMP" "$KEY_FILE"
 
-# Keep other custom feeds (including momo) and replace only the wrtbox entry.
+# In auto mode, use GitHub only when the core is running and GitHub is reachable.
+if [ "$MODE" = auto ]; then
+    if pidof sing-box >/dev/null 2>&1 && \
+       wget -q -T 12 --spider \
+         "https://github.com/Oterea/wrtbox/releases/latest"; then
+        MODE=direct
+    else
+        MODE=server
+    fi
+fi
+
+FEED_URL="$REPOSITORY_URL/openwrt-$SERIES/$CHANNEL/$MODE/$ARCH/packages.adb"
+
+# Keep every unrelated custom feed untouched. Remove only wrtbox entries,
+# including entries that the user commented out in LuCI, then add one active
+# entry for the selected mode.
 touch "$REPOSITORY_FILE"
 sed -i \
-    -e '\|^https://wrtbox\.pages\.dev/|d' \
-    -e '\|^https://wrtbox\.czuouo\.workers\.dev/|d' \
+    -e '\|^[[:space:]]*#\?[[:space:]]*https://wrtbox\.pages\.dev/|d' \
+    -e '\|^[[:space:]]*#\?[[:space:]]*https://wrtbox\.czuouo\.workers\.dev/|d' \
     "$REPOSITORY_FILE"
 echo "$FEED_URL" >> "$REPOSITORY_FILE"
 
@@ -83,5 +114,5 @@ for attempt in 1 2 3 4 5; do
 done
 test "$updated" = 1
 
-echo "wrtbox $CHANNEL feed configured for OpenWrt $SERIES ($ARCH)"
+echo "wrtbox $CHANNEL/$MODE feed configured for OpenWrt $SERIES ($ARCH)"
 echo "Install or upgrade sing-box with: apk add sing-box"
