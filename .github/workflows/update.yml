@@ -10,8 +10,8 @@ permissions:
   contents: write
 
 env:
-  # Change this one value when migrating the APK server.
-  WRTBOX_SERVER: 43.142.80.44
+  # Configure this as the WRTBOX_SERVER Actions secret.
+  WRTBOX_SERVER: ${{ secrets.WRTBOX_SERVER }}
   OPENWRT_SDK_URLS: >-
     https://downloads.openwrt.org/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
     https://mirror.sjtu.edu.cn/openwrt/releases/25.12.2/targets/armsr/armv8/openwrt-sdk-25.12.2-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
