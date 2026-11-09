@@ -15,9 +15,10 @@ OpenWrt 25.12 / ImmortalWrt 25.12 的 sing-box APK Feed。
 - [常用命令](#常用命令)
 - [脚本行为](#脚本行为)
 - [支持架构](#支持架构)
-- [GitHub Actions Secrets](#github-actions-secrets)
 
-## 推荐使用顺序
+## 推荐使用方式
+
+### 获取 Feed
 
 始终优先使用 `ghproxy`：
 
@@ -25,23 +26,47 @@ OpenWrt 25.12 / ImmortalWrt 25.12 的 sing-box APK Feed。
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable ghproxy
 ```
 
-这条命令会配置 `ghproxy` Feed 并执行 `apk update`，不会安装或升级 sing-box。
+这条命令会配置 Feed 并执行 `apk update`，不会安装或升级 sing-box。
+
+### 安装或更新
+
+首次安装：
+
+```sh
+apk add sing-box
+```
+
+更新：
+
+```sh
+apk upgrade sing-box
+```
 
 如果 `ghproxy` 不可用：
 
-1. 第一次安装 sing-box，使用 `server`：
+首次安装使用 `server` 获取 Feed：
 
-   ```sh
-   wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
-   apk add sing-box
-   ```
+```sh
+wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
+```
 
-2. sing-box 已经运行后更新，使用 `direct`：
+然后安装：
 
-   ```sh
-   wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
-   apk upgrade sing-box
-   ```
+```sh
+apk add sing-box
+```
+
+sing-box 已经运行后，使用 `direct` 获取 Feed：
+
+```sh
+wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
+```
+
+然后更新：
+
+```sh
+apk upgrade sing-box
+```
 
 使用 `auto` 时，脚本会按以下顺序选择：
 
@@ -343,14 +368,4 @@ wrtbox.czuouo.workers.dev
 ```text
 aarch64_generic
 x86_64
-```
-
-## GitHub Actions Secrets
-
-```text
-WRTBOX_SERVER
-APK_SIGN_PRIVATE_KEY
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
-WRTBOX_SSH_PRIVATE_KEY_B64
 ```
