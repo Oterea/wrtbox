@@ -2,105 +2,137 @@
 
 OpenWrt 25.12 / ImmortalWrt 25.12 的 sing-box APK Feed。
 
-## Stable 安装
+下面命令只配置 Feed 并执行 `apk update`，不会安装或升级 sing-box。
 
-### Pages：自动选择
+## Pages 直连
+
+### Stable / auto
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable auto
-apk add sing-box
 ```
 
-### Pages：强制服务器
+### Stable / server
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
-apk add sing-box
 ```
 
-### Pages：强制 GitHub 直连
+### Stable / direct
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
-apk add sing-box
 ```
 
-### gh-proxy：自动选择
-
-```sh
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
-apk add sing-box
-```
-
-### gh-proxy：强制服务器
-
-```sh
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
-apk add sing-box
-```
-
-### gh-proxy：强制 GitHub 直连
-
-```sh
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
-apk add sing-box
-```
-
-## Beta 安装
-
-### Pages：自动选择
+### Beta / auto
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta auto
-apk add sing-box
 ```
 
-### Pages：强制服务器
+### Beta / server
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta server
-apk add sing-box
 ```
 
-### Pages：强制 GitHub 直连
+### Beta / direct
 
 ```sh
 wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta direct
-apk add sing-box
 ```
 
-### gh-proxy：自动选择
+## GitHub Raw 直连
+
+### Stable / auto
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
+```
+
+### Stable / server
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
+```
+
+### Stable / direct
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
+```
+
+### Beta / auto
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
+```
+
+### Beta / server
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
+```
+
+### Beta / direct
+
+```sh
+wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
+```
+
+## gh-proxy
+
+### Stable / auto
+
+```sh
+wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
+```
+
+### Stable / server
+
+```sh
+wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
+```
+
+### Stable / direct
+
+```sh
+wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
+```
+
+### Beta / auto
 
 ```sh
 wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
-apk add sing-box
 ```
 
-### gh-proxy：强制服务器
+### Beta / server
 
 ```sh
 wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
-apk add sing-box
 ```
 
-### gh-proxy：强制 GitHub 直连
+### Beta / direct
 
 ```sh
 wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
+```
+
+## 安装和升级
+
+配置 Feed 后，单独执行：
+
+```sh
 apk add sing-box
 ```
 
-## 升级
-
-Feed 切换后，命令行升级：
+升级：
 
 ```sh
 apk upgrade sing-box
 ```
 
-LuCI：打开“软件包”，点击“更新列表”，再点击 sing-box 的“升级”。
-
-如果只是切换下载路径，不想升级软件包，只运行对应的 Feed 命令即可；脚本会自动执行 `apk update`。
+也可以在 LuCI 软件包页面点击“更新列表”，再点击安装或升级。
 
 ## 归档版本
 
@@ -110,16 +142,10 @@ LuCI：打开“软件包”，点击“更新列表”，再点击 sing-box 的
 https://wrtbox-archive.pages.dev/openwrt-25.12/1.14.3/aarch64_generic/packages.adb
 ```
 
-精确安装 1.14.3：
+指定安装：
 
 ```sh
 apk add sing-box=1.14.3-r0
-```
-
-回到最新 stable：
-
-```sh
-apk upgrade sing-box
 ```
 
 ## 脚本行为
@@ -137,7 +163,7 @@ wrtbox.pages.dev
 wrtbox.czuouo.workers.dev
 ```
 
-已注释的 wrtbox 行也会被识别并重写。momo、归档 Feed 和其他自定义 Feed 不会修改。
+启用或注释的 wrtbox 行都会被识别并重写。其他 Feed 不修改。
 
 ## 支持架构
 
@@ -146,15 +172,7 @@ aarch64_generic
 x86_64
 ```
 
-## 服务器迁移
-
-```sh
-chmod +x scripts/setup-server.sh
-ssh-keygen -t ed25519 -f ~/.ssh/wrtbox-actions -N ''
-scripts/setup-server.sh NEW_SERVER_IP ubuntu ~/.ssh/wrtbox-actions.pub
-```
-
-GitHub Actions Secret：
+## GitHub Actions Secrets
 
 ```text
 WRTBOX_SERVER
