@@ -57,41 +57,109 @@ Feed 脚本的来源有三种，三种方式执行的脚本功能相同。命令
 
 #### Stable
 
-```sh
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable auto
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable ghproxy
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- stable direct
+  ```
 
 #### Beta
 
-```sh
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta auto
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta server
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta ghproxy
-wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://wrtbox.pages.dev/feed.sh | ash -s -- beta direct
+  ```
 
 ### GitHub Raw 直连
 
 #### Stable
 
-```sh
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable ghproxy
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
+  ```
 
 #### Beta
 
-```sh
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta ghproxy
-wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
+  ```
 
 ### gh-proxy 获取脚本
 
@@ -99,21 +167,55 @@ wget -O - https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh |
 
 #### Stable
 
-```sh
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable ghproxy
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- stable direct
+  ```
 
 #### Beta
 
-```sh
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta ghproxy
-wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
-```
+- `auto`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta auto
+  ```
+
+- `server`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta server
+  ```
+
+- `ghproxy`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta ghproxy
+  ```
+
+- `direct`
+
+  ```sh
+  wget -O - https://gh-proxy.com/https://raw.githubusercontent.com/Oterea/wrtbox/main/scripts/feed.sh | ash -s -- beta direct
+  ```
 
 ## 安装、升级和降级
 
